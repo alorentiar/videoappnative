@@ -1,65 +1,69 @@
 import React, { useRef, useState } from 'react';
-import { View, Button, ActivityIndicator } from 'react-native';
-import Video, { OnProgressData } from 'react-native-video';
+import { View, Button, StyleSheet, Dimensions } from 'react-native';
+import Video from 'react-native-video';
 
-const videoUrls = [
-  'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
-  'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8',
-];
-
-const VideoScreen: React.FC = () => {
-  const videoRef = useRef<Video>(null);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+const VideoScreen = () => {
+  const videoRef = useRef(null);
+  const [videoIndex, setVideoIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [seekTime, setSeekTime] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [source, setSource] = useState({ uri: videoUrls[currentVideoIndex] });
+  const videos = [
+    {
+      uri: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
+    },
+    {
+      uri: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
+    },
+  ];
 
   const switchVideo = () => {
     if (videoRef.current) {
-      const videoPlayer = videoRef.current;
-
-      // Pause current video
       setPaused(true);
-
-      // Hide video and show loading indicator
-      setIsLoading(true);
-
-      // Switch video URL
-      const nextVideoIndex = (currentVideoIndex + 1) % videoUrls.length;
-      const videoUrl = videoUrls[nextVideoIndex];
-
-      // Load new video and play
-      setCurrentVideoIndex(nextVideoIndex);
-      setSource({ uri: videoUrl });
-      setIsLoading(false);
-      setPaused(false);
+      setSeekTime(currentTime);
+      setVideoIndex(prevIndex => (prevIndex === 0 ? 1 : 0));
     }
   };
 
-  const onProgress = (data: OnProgressData) => {
-    setCurrentTime(Math.floor(data.currentTime));
+  const onProgress = data => {
+    setCurrentTime(data.currentTime);
+  };
+
+  const onPlaybackResume = () => {
+    setSeekTime(currentTime);
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <Video
         ref={videoRef}
-        source={source}
+        source={videos[videoIndex]}
+        style={styles.video}
         onProgress={onProgress}
-        style={{ flex: 1 }}
+        onPlaybackResume={onPlaybackResume}
         resizeMode="contain"
-        controls={true}
+        controls
         paused={paused}
       />
-
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <Button title="Switch Video" onPress={switchVideo} />
-      )}
+      <Button
+        title="Switch Video"
+        onPress={switchVideo}
+        disabled={!videoRef.current}
+      />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  video: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').width * (9 / 16), // Assuming 16:9 aspect ratio
+  },
+});
 
 export default VideoScreen;
