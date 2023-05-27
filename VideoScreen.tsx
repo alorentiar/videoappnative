@@ -1,13 +1,12 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { View, Button, Text } from "react-native";
-import Video from "react-native-video";
+import Video, { OnProgressData } from "react-native-video";
 
 const VideoScreen: React.FC = () => {
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef<Video | null>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [seekTime, setSeekTime] = useState(0);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const [totalSeekTime, setTotalSeekTime] = useState(0);
 
   const videoUrls = [
     "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
@@ -16,43 +15,51 @@ const VideoScreen: React.FC = () => {
 
   const switchVideo = () => {
     if (videoRef.current) {
-      setPaused(true); // Pause the current video
-      videoRef.current.seek(seekTime); // Seek to the saved seek time
-      setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % videoUrls.length);
+      const nextVideoIndex = (currentVideoIndex + 1) % videoUrls.length;
+      setCurrentVideoIndex(nextVideoIndex);
       setVideoLoaded(false);
     }
   };
 
-  const onProgress = (data: any) => {
+  const onProgress = (data: OnProgressData) => {
     if (!videoLoaded) {
-      setVideoLoaded(true); // Mark video as loaded once the first progress update is received
-    }
-
-    setSeekTime(Math.floor(data.currentTime)); // Update the seek time
-  };
-
-  const onLoad = () => {
-    if (!videoLoaded) {
-      setVideoLoaded(true); // Mark video as loaded when it finishes loading
-      setPaused(false); // Start playing the video
+      setVideoLoaded(true);
+      const currentTime = Math.floor(data.currentTime || 0);
+      setTotalSeekTime((prevTotalSeekTime) => prevTotalSeekTime + currentTime);
     }
   };
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (videoLoaded) {
+        videoRef.current.seek(totalSeekTime);
+      } else {
+        videoRef.current.presentFullscreenPlayer();
+      }
+    }
+  }, [videoLoaded]);
+
+  useEffect(() => {
+    return () => {
+      setTotalSeekTime(0);
+    };
+  }, []);
 
   return (
     <View style={{ flex: 1 }}>
       <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>
-        Seek Time: {seekTime} seconds
+        Total Seek Time: {totalSeekTime} seconds
       </Text>
 
       <Video
-        ref={videoRef}
+        ref={(ref) => (videoRef.current = ref)}
         source={{ uri: videoUrls[currentVideoIndex] }}
         style={{ flex: 1 }}
         resizeMode="contain"
         controls={true}
-        paused={paused} // Control the playback state
         onProgress={onProgress}
-        onLoad={onLoad}
+        onLoad={() => setVideoLoaded(true)}
+        paused={!videoLoaded}
       />
 
       <Button title="Switch Video" onPress={switchVideo} />
