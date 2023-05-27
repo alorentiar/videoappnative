@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from "react";
-import { View, Button, Text } from "react-native";
-import Video, { OnProgressData } from "react-native-video";
+import React, {useRef, useState, useEffect} from 'react';
+import {View, Button, Text} from 'react-native';
+import Video, {OnProgressData} from 'react-native-video';
 
 const VideoScreen: React.FC = () => {
   const videoRef = useRef<Video | null>(null);
@@ -9,8 +9,8 @@ const VideoScreen: React.FC = () => {
   const [totalSeekTime, setTotalSeekTime] = useState(0);
 
   const videoUrls = [
-    "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
-    "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+    'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
+    'https://cinehub-test.s3.ap-southeast-3.amazonaws.com/Outputs/hls-hd-en/Avengers-Endgame.m3u8',
   ];
 
   const switchVideo = () => {
@@ -25,7 +25,7 @@ const VideoScreen: React.FC = () => {
     if (!videoLoaded) {
       setVideoLoaded(true);
       const currentTime = Math.floor(data.currentTime || 0);
-      setTotalSeekTime((prevTotalSeekTime) => prevTotalSeekTime + currentTime);
+      setTotalSeekTime(prevTotalSeekTime => prevTotalSeekTime + currentTime);
     }
   };
 
@@ -46,15 +46,21 @@ const VideoScreen: React.FC = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>
+    <View style={{flex: 1}}>
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          marginTop: 20,
+        }}>
         Total Seek Time: {totalSeekTime} seconds
       </Text>
 
       <Video
-        ref={(ref) => (videoRef.current = ref)}
-        source={{ uri: videoUrls[currentVideoIndex] }}
-        style={{ flex: 1 }}
+        ref={ref => (videoRef.current = ref)}
+        source={{uri: videoUrls[currentVideoIndex]}}
+        style={{flex: 1}}
         resizeMode="contain"
         controls={true}
         onProgress={onProgress}
